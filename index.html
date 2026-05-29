@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Solo Leveling Fitness Console</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0a0a1a;
+      --panel: rgba(255,255,255,0.04);
+      --border: rgba(79,195,247,0.25);
+      --text: #e4f5ff;
+      --dim: #98a8c7;
+      --purple: #7c4dff;
+      --ice: #4fc3f7;
+      --red: #ff5c8a;
+      --success: #55ffb2;
+      --radius: 24px;
+      --shadow: 0 0 20px rgba(79,195,247,0.12);
+      --card-shadow: 0 10px 40px rgba(0,0,0,0.25);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; font-family: 'Rajdhani', sans-serif; background: radial-gradient(circle at top, rgba(79,195,247,0.15), transparent 32%), linear-gradient(135deg, #06060f 0%, #0b0b21 100%); color: var(--text); }
+    body { overflow-x: hidden; }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background: radial-gradient(circle at 20% 10%, rgba(124,77,255,0.18), transparent 18%), radial-gradient(circle at 80% 20%, rgba(79,195,247,0.14), transparent 20%), radial-gradient(circle at 50% 85%, rgba(255,255,255,0.06), transparent 25%);
+      pointer-events: none;
+      animation: glowShift 20s ease-in-out infinite;
+      z-index: -2;
+    }
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 45%);
+      pointer-events: none;
+      opacity: 0.75;
+      z-index: -1;
+    }
+
+    @keyframes glowShift {
+      0%,100% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(10px, -10px) scale(1.05); }
+    }
+
+    .app-shell { width: min(100%, 420px); margin: 0 auto; padding: 24px 18px 40px; }
+    h1, h2, h3 { margin: 0; font-family: 'Orbitron', sans-serif; letter-spacing: 0.08em; }
+    h1 { font-size: 1.5rem; text-transform: uppercase; color: var(--ice); }
+    .subtext { color: var(--dim); font-size: 0.9rem; margin-top: 8px; }
+
+    .panel { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--card-shadow), var(--shadow); backdrop-filter: blur(10px); overflow: hidden; }
+    .panel + .panel { margin-top: 20px; }
+    .panel-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 18px 20px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .panel-header span { font-size: 0.78rem; letter-spacing: 0.18em; color: var(--ice); }
+    .panel-content { padding: 18px 20px 20px; }
+    .stat-line { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 16px; }
+    .stat-title { font-size: 0.82rem; text-transform: uppercase; color: var(--dim); }
+    .stat-value { font-size: 1.1rem; font-weight: 700; color: #fff; }
+
+    .tracker-grid { display: grid; gap: 18px; margin-top: 18px; }
+    .tracker-card { border-radius: 22px; background: rgba(255,255,255,0.04); border: 1px solid rgba(79,195,247,0.16); padding: 18px; position: relative; overflow: hidden; }
+    .tracker-card::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(124,77,255,0.08), rgba(79,195,247,0.04)); pointer-events: none; }
+    .tracker-card > * { position: relative; }
+    .tracker-title { display: flex; justify-content: space-between; gap: 8px; align-items: center; margin-bottom: 14px; font-size: 0.95rem; text-transform: uppercase; color: var(--ice); }
+    .tracker-title small { color: var(--dim); font-size: 0.78rem; text-transform: none; }
+    .tracker-value { display: flex; align-items: baseline; gap: 8px; font-size: 2.4rem; font-family: 'Orbitron', sans-serif; font-weight: 700; color: #fff; }
+    .tracker-value span { color: var(--ice); font-size: 1.05rem; }
+    .control-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; margin-top: 18px; }
+    .control-row button, .value-input { min-height: 48px; border-radius: 14px; border: none; background: rgba(79,195,247,0.14); color: #fff; font-size: 1rem; cursor: pointer; transition: transform 0.2s ease, background 0.2s ease; }
+    .control-row button:hover, .quick-add button:hover { transform: translateY(-1px); background: rgba(124,77,255,0.22); }
+    .value-input { padding: 0 14px; color: #fff; background: rgba(0,0,0,0.3); outline: none; }
+    .quick-add { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+    .quick-add button { flex: 1 1 30%; }
+
+    .progress-wrap { margin-top: 18px; gap: 10px; display: grid; }
+    .progress-label { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--dim); }
+    .progress-bar { width: 100%; height: 10px; border-radius: 999px; overflow: hidden; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); }
+    .progress-bar > div { height: 100%; width: 0%; background: linear-gradient(90deg, var(--purple), var(--ice)); transition: width 0.4s ease; }
+
+    .field-inline { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
+    .field-inline label { color: var(--dim); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; }
+    .field-inline .goal { display: flex; align-items: center; gap: 8px; font-size: 0.95rem; }
+    .field-inline .goal span { font-family: 'Orbitron', sans-serif; color: #fff; }
+    .field-inline .edit-icon { width: 18px; height: 18px; display: grid; place-items: center; background: rgba(79,195,247,0.14); border-radius: 999px; cursor: pointer; }
+
+    .panel-subtitle { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; gap: 12px; }
+    .info-pill { display: inline-flex; gap: 8px; align-items: center; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 999px; padding: 10px 14px; color: var(--ice); font-size: 0.78rem; }
+    .info-pill strong { font-family: 'Orbitron', sans-serif; color: #fff; }
+
+    .hero { display: flex; flex-direction: column; gap: 10px; }
+    .hero .name-group { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .hero .player-name { font-size: 1.5rem; letter-spacing: 0.08em; color: var(--ice); }
+    .hero .name-input { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; color: #fff; padding: 12px 14px; font-size: 1rem; outline: none; }
+
+    .badge-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; margin-top: 14px; }
+    .badge { border-radius: 18px; padding: 14px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.035); display: grid; gap: 4px; transition: transform 0.2s ease, background 0.2s ease; }
+    .badge.locked { opacity: 0.45; filter: grayscale(0.7); }
+    .badge.unlocked { box-shadow: 0 0 20px rgba(79,195,247,0.2); border-color: rgba(79,195,247,0.4); background: rgba(79,195,247,0.08); }
+    .badge strong { font-family: 'Orbitron', sans-serif; font-size: 0.95rem; color: #fff; }
+    .badge small { color: var(--dim); font-size: 0.78rem; }
+
+    .counters { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; margin-top: 16px; }
+    .counter-card { border-radius: 18px; background: rgba(255,255,255,0.04); padding: 16px; border: 1px solid rgba(255,255,255,0.08); }
+    .counter-card p { margin: 0; font-size: 0.72rem; color: var(--dim); text-transform: uppercase; letter-spacing: 0.1em; }
+    .counter-card h3 { margin: 8px 0 0; font-size: 1.6rem; font-family: 'Orbitron', sans-serif; color: #fff; }
+
+    .rank-display { display: flex; align-items: center; gap: 10px; font-size: 0.95rem; text-transform: uppercase; color: var(--ice); }
+    .rank-display .rank-badge { padding: 10px 14px; border-radius: 999px; border: 1px solid rgba(124,77,255,0.35); background: rgba(124,77,255,0.15); font-family: 'Orbitron', sans-serif; letter-spacing: 0.12em; }
+    .level-number { font-size: 4rem; font-family: 'Orbitron', sans-serif; color: #fff; text-shadow: 0 0 24px rgba(79,195,247,0.4); }
+
+    .xp-block { margin-top: 16px; padding: 16px; border-radius: 18px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); }
+    .xp-block p { margin: 0 0 10px; font-size: 0.8rem; color: var(--dim); }
+    .xp-block .xp-bar { height: 12px; width: 100%; border-radius: 999px; background: rgba(255,255,255,0.06); overflow: hidden; border: 1px solid rgba(79,195,247,0.12); }
+    .xp-bar > div { width: 0%; height: 100%; background: linear-gradient(90deg, var(--purple), var(--ice)); transition: width 0.4s ease; }
+    .xp-label { display: flex; justify-content: space-between; font-size: 0.82rem; color: var(--dim); margin-top: 8px; }
+
+    .ring-row { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; margin-top: 18px; }
+    .ring-card { border-radius: 24px; padding: 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); display: grid; gap: 10px; }
+    .ring-card small { color: var(--dim); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; }
+    .ring-card .ring { width: 100%; aspect-ratio: 1 / 1; display: grid; place-items: center; }
+    .ring-card .ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+    .ring-card .ring circle { fill: none; stroke-width: 10; opacity: 0.18; }
+    .ring-card .ring circle.progress { stroke: var(--ice); stroke-linecap: round; transition: stroke-dashoffset 0.5s ease; opacity: 1; }
+    .ring-card .ring-label { position: absolute; font-size: 0.82rem; color: #fff; }
+
+    .log-list { margin-top: 16px; max-height: 240px; overflow-y: auto; display: grid; gap: 10px; padding-right: 4px; }
+    .log-item { padding: 12px 14px; border-radius: 18px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); font-size: 0.9rem; line-height: 1.4; }
+    .log-time { color: var(--ice); font-family: 'Orbitron', sans-serif; font-size: 0.8rem; display: block; margin-bottom: 4px; }
+
+    .history-row { margin-top: 14px; display: grid; gap: 12px; }
+    .history-card { border-radius: 22px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); padding: 14px; display: grid; gap: 8px; }
+    .history-card .day { font-size: 0.88rem; color: var(--ice); font-family: 'Orbitron', sans-serif; }
+    .history-card .summary { display: grid; gap: 4px; color: var(--dim); font-size: 0.82rem; }
+
+    .collapse-toggle { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 10px; background: transparent; border: none; color: var(--ice); font-family: 'Orbitron', sans-serif; padding: 14px 0 0; cursor: pointer; }
+    .collapse-toggle span { font-size: 0.9rem; }
+    .collapse-toggle svg { transition: transform 0.25s ease; }
+    .collapsed .toggle-icon { transform: rotate(-90deg); }
+
+    .button-row { display: flex; gap: 12px; margin-top: 18px; }
+    .button { min-height: 48px; border-radius: 16px; border: 1px solid rgba(79,195,247,0.2); background: rgba(79,195,247,0.12); color: #fff; flex: 1; cursor: pointer; font-weight: 600; font-size: 0.95rem; transition: transform 0.2s ease, background 0.2s ease; }
+    .button:hover { transform: translateY(-1px); background: rgba(79,195,247,0.22); }
+
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(10,10,26,0.82); display: none; align-items: center; justify-content: center; padding: 20px; z-index: 50; }
+    .modal-backdrop.active { display: flex; }
+    .modal { width: min(100%, 380px); border-radius: 28px; background: rgba(5,8,21,0.96); border: 1px solid rgba(79,195,247,0.3); padding: 24px; text-align: center; box-shadow: 0 0 60px rgba(79,195,247,0.25); }
+    .modal h3 { margin-top: 0; font-size: 1.3rem; color: #fff; }
+    .modal p { color: var(--dim); margin: 12px 0 20px; line-height: 1.5; }
+    .modal-buttons { display: flex; gap: 12px; justify-content: center; }
+    .modal-buttons button { flex: 1; }
+
+    .achievement-overlay { position: fixed; inset: 0; background: rgba(10,10,26,0.95); display: none; align-items: center; justify-content: center; text-align: center; padding: 30px; z-index: 60; }
+    .achievement-overlay.active { display: flex; animation: overlayIn 0.5s ease both; }
+    .achievement-card { max-width: 360px; border-radius: 28px; padding: 28px; background: rgba(12,14,27,0.96); border: 1px solid rgba(79,195,247,0.35); box-shadow: 0 0 40px rgba(79,195,247,0.25); }
+    .achievement-card h2 { margin: 0 0 14px; color: var(--purple); font-size: 2rem; }
+    .achievement-card p { margin: 0 10px 20px; color: #fff; font-size: 1rem; line-height: 1.4; }
+    .achievement-card small { color: var(--ice); text-transform: uppercase; letter-spacing: 0.12em; }
+    @keyframes overlayIn { from { opacity: 0; transform: translateY(20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+    .pulse { animation: pulseGlow 0.4s ease both; }
+    @keyframes pulseGlow { 0% { transform: scale(1); text-shadow: 0 0 0 rgba(79,195,247,0.45); } 50% { transform: scale(1.08); text-shadow: 0 0 22px rgba(79,195,247,0.55); } 100% { transform: scale(1); } }
+
+    @media (max-width: 440px) {
+      .app-shell { padding: 20px 16px 36px; }
+      .button-row { flex-direction: column; }
+      .ring-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <div class="panel">
+      <div class="panel-header"><span>[ HUNTER STATUS ]</span><span class="info-pill"><strong>Solo Console</strong></span></div>
+      <div class="panel-content hero">
+        <div class="name-group">
+          <div>
+            <div class="player-name" id="playerNameLabel">HUNTER</div>
+            <input class="name-input" id="playerNameInput" type="text" maxlength="16" placeholder="Enter your name" aria-label="Player name">
+          </div>
+          <div class="rank-display"><span>Rank</span><span class="rank-badge" id="rankBadge">E</span></div>
+        </div>
+        <div class="level-block">
+          <div class="level-number" id="levelNumber">1</div>
+          <div class="xp-block">
+            <p>XP Progress</p>
+            <div class="xp-bar"><div id="xpFill"></div></div>
+            <div class="xp-label"><span id="xpLabel">0 / 100 XP</span><span id="nextLevelLabel">Next</span></div>
+          </div>
+        </div>
+        <div class="counters">
+          <div class="counter-card"><p>Today Reps</p><h3 id="todayReps">0</h3></div>
+          <div class="counter-card"><p>Today Miles</p><h3 id="todayMiles">0.0</h3></div>
+          <div class="counter-card"><p>Streak</p><h3 id="dayStreak">0</h3></div>
+          <div class="counter-card"><p>Lifetime XP</p><h3 id="lifetimeXp">0</h3></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header"><span>[ STRENGTH TRAINING ]</span><span class="info-pill">4 Trackers</span></div>
+      <div class="panel-content tracker-grid" id="trackers"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header"><span>[ ACTIVITY LOG ]</span><button class="button" id="resetTodayBtn">Reset Today</button></div>
+      <div class="panel-content">
+        <div class="log-list" id="logList"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header"><span>[ ACHIEVEMENTS ]</span><span class="info-pill" id="unlockedCounter">0 / 5</span></div>
+      <div class="panel-content badge-grid" id="badgeGrid"></div>
+    </div>
+
+    <div class="panel" id="historyPanel">
+      <button class="collapse-toggle" id="historyToggle"><span>Workout History</span><svg class="toggle-icon" viewBox="0 0 24 24" width="20" height="20"><path d="M8 10l4 4 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <div class="panel-content history-row" id="historyList"></div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="confirmModal">
+    <div class="modal"><h3>Reset Today?</h3><p>This will clear today\'s counts and log entries. All-time totals remain intact.</p><div class="modal-buttons"><button class="button" id="cancelReset">Cancel</button><button class="button" id="confirmReset">Confirm</button></div></div>
+  </div>
+
+  <div class="achievement-overlay" id="achievementOverlay"><div class="achievement-card"><h2 id="achievementTitle">Achievement Unlocked</h2><p id="achievementText">You reached a new milestone.</p><small>Quest Complete</small></div></div>
+
+  <script>
+    const exercises = [
+      { key: 'pushups', label: 'Pushups', unit: 'reps', quick: [1,5,10], goal: 50, xpRate: 1 },
+      { key: 'situps', label: 'Situps', unit: 'reps', quick: [1,5,10], goal: 50, xpRate: 1 },
+      { key: 'squats', label: 'Squats', unit: 'reps', quick: [1,5,10], goal: 60, xpRate: 1 },
+      { key: 'running', label: 'Running', unit: 'miles', quick: [0.5,1,2], goal: 3, xpRate: 100 }
+    ];
+
+    const achievements = [
+      { id: 'firstBlood', label: 'First Blood', desc: 'Log your first rep', check: data => data.todayReps + data.todayMiles > 0 },
+      { id: 'century', label: 'Century', desc: '100 reps in a day', check: data => data.todayReps >= 100 },
+      { id: 'ironWill', label: 'Iron Will', desc: '7-day streak', check: data => data.streak >= 7 },
+      { id: 'roadRunner', label: 'Road Runner', desc: 'Run 5 miles total', check: data => data.lifetimeMiles >= 5 },
+      { id: 'sRank', label: 'S-Rank', desc: 'Reach S rank', check: data => data.rank === 'S' }
+    ];
+
+    const state = { todayKey: '', todayData: {}, stats: {}, playerName: 'HUNTER', streak: 0, lifetimeXp: 0, rank: 'E', level: 1, achievements: [], history: [] };
+    const trackersContainer = document.getElementById('trackers');
+    const logList = document.getElementById('logList');
+    const badgeGrid = document.getElementById('badgeGrid');
+    const historyList = document.getElementById('historyList');
+    const historyToggle = document.getElementById('historyToggle');
+    const historyPanel = document.getElementById('historyPanel');
+    const resetTodayBtn = document.getElementById('resetTodayBtn');
+    const confirmModal = document.getElementById('confirmModal');
+    const cancelReset = document.getElementById('cancelReset');
+    const confirmReset = document.getElementById('confirmReset');
+    const achievementOverlay = document.getElementById('achievementOverlay');
+    const achievementTitle = document.getElementById('achievementTitle');
+    const achievementText = document.getElementById('achievementText');
+    const playerNameInput = document.getElementById('playerNameInput');
+    const playerNameLabel = document.getElementById('playerNameLabel');
+    const rankBadge = document.getElementById('rankBadge');
+    const levelNumber = document.getElementById('levelNumber');
+    const xpFill = document.getElementById('xpFill');
+    const xpLabel = document.getElementById('xpLabel');
+    const nextLevelLabel = document.getElementById('nextLevelLabel');
+    const todayReps = document.getElementById('todayReps');
+    const todayMiles = document.getElementById('todayMiles');
+    const dayStreak = document.getElementById('dayStreak');
+    const lifetimeXp = document.getElementById('lifetimeXp');
+    const unlockedCounter = document.getElementById('unlockedCounter');
+
+    const loadStorage = () => {
+      const saved = JSON.parse(localStorage.getItem('solo-leveling-state') || '{}');
+      Object.assign(state, saved);
+      state.playerName = state.playerName || 'HUNTER';
+      state.achievements = state.achievements || [];
+      state.stats = state.stats || {};
+      state.history = state.history || [];
+      state.todayKey = new Date().toISOString().slice(0,10);
+      state.todayData = JSON.parse(localStorage.getItem(state.todayKey) || '{}');
+      state.todayData = Object.assign({ pushups:0,situps:0,squats:0,running:0, logs: [] }, state.todayData);
+    };
+
+    const saveState = () => localStorage.setItem('solo-leveling-state', JSON.stringify({ playerName: state.playerName, stats: state.stats, streak: state.streak, lifetimeXp: state.lifetimeXp, rank: state.rank, level: state.level, achievements: state.achievements, history: state.history }));
+    const saveToday = () => localStorage.setItem(state.todayKey, JSON.stringify(state.todayData));
+
+    const computeTotals = () => {
+      const totals = { todayReps: 0, todayMiles: 0, lifetimeMiles: 0 };
+      totals.todayReps = state.todayData.pushups + state.todayData.situps + state.todayData.squats;
+      totals.todayMiles = Number(state.todayData.running.toFixed(1));
+      totals.lifetimeMiles = (state.stats.running || 0);
+      return totals;
+    };
+
+    const xpFor = (value, xpRate) => Math.round(value * xpRate);
+    const levelForXp = xp => Math.floor(Math.sqrt(xp / 25)) + 1;
+    const xpTarget = level => Math.max(100, Math.floor((level + 1) ** 2 * 25));
+    const rankForXp = xp => {
+      if (xp >= 2000) return 'S';
+      if (xp >= 1200) return 'A';
+      if (xp >= 700) return 'B';
+      if (xp >= 350) return 'C';
+      if (xp >= 150) return 'D';
+      return 'E';
+    };
+
+    const updateRankDisplay = () => {
+      state.rank = rankForXp(state.lifetimeXp);
+      state.level = levelForXp(state.lifetimeXp);
+      const nextTarget = xpTarget(state.level);
+      const progress = Math.min(100, (state.lifetimeXp / nextTarget) * 100);
+      rankBadge.textContent = state.rank;
+      levelNumber.textContent = state.level;
+      xpFill.style.width = progress + '%';
+      xpLabel.textContent = `${state.lifetimeXp} / ${nextTarget} XP`;
+      nextLevelLabel.textContent = `Next ${nextTarget}`;
+    };
+
+    const recordLog = (entry) => {
+      const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute:'2-digit' });
+      state.todayData.logs.unshift({ time, entry });
+      if (state.todayData.logs.length > 50) state.todayData.logs.pop();
+      saveToday();
+    };
+
+    const createTrackerCard = (exercise) => {
+      const card = document.createElement('div');
+      card.className = 'tracker-card';
+      card.innerHTML = `
+        <div class="tracker-title"><span>${exercise.label}</span><small>Goal ${exercise.goal}${exercise.unit === 'miles' ? '' : ''}</small></div>
+        <div class="tracker-value"><span id="value-${exercise.key}">0</span><span>${exercise.unit}</span></div>
+        <div class="control-row">
+          <button class="count-btn" data-key="${exercise.key}" data-action="decrease">-</button>
+          <button class="count-btn" data-key="${exercise.key}" data-action="increase">+</button>
+        </div>
+        <div class="quick-add"></div>
+        <div class="progress-wrap">
+          <div class="progress-label"><span>Daily target</span><span id="progress-label-${exercise.key}">0 / ${exercise.goal}</span></div>
+          <div class="progress-bar"><div id="progress-${exercise.key}"></div></div>
+        </div>
+        <div class="field-inline"><label>Goal</label><div class="goal"><span id="goal-${exercise.key}">${exercise.goal}</span><div class="edit-icon" data-key="${exercise.key}" title="Edit goal">✎</div></div></div>
+      `;
+
+      const quickContainer = card.querySelector('.quick-add');
+      exercise.quick.forEach(amount => {
+        const label = exercise.unit === 'miles' ? `+${amount}` : `+${amount}`;
+        const btn = document.createElement('button');
+        btn.textContent = label;
+        btn.className = 'quick-btn';
+        btn.dataset.key = exercise.key;
+        btn.dataset.amount = amount;
+        quickContainer.appendChild(btn);
+      });
+      trackersContainer.appendChild(card);
+    };
+
+    const renderTrackers = () => {
+      trackersContainer.innerHTML = '';
+      exercises.forEach(createTrackerCard);
+    };
+
+    const renderLog = () => {
+      logList.innerHTML = '';
+      if (!state.todayData.logs.length) {
+        logList.innerHTML = '<div class="log-item">No activity logged yet. Start your hunt.</div>';
+        return;
+      }
+      state.todayData.logs.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'log-item';
+        div.innerHTML = `<span class="log-time">${item.time}</span>${item.entry}`;
+        logList.appendChild(div);
+      });
+    };
+
+    const renderBadges = () => {
+      badgeGrid.innerHTML = '';
+      const totals = computeTotals();
+      const data = { todayReps: totals.todayReps, todayMiles: totals.todayMiles, streak: state.streak, lifetimeMiles: totals.lifetimeMiles, rank: state.rank };
+      let unlocked = 0;
+      achievements.forEach(ach => {
+        const earned = state.achievements.includes(ach.id) || ach.check(data);
+        if (earned && !state.achievements.includes(ach.id)) {
+          state.achievements.push(ach.id);
+          showAchievement(ach.label, ach.desc);
+        }
+        if (earned) unlocked++;
+        const badge = document.createElement('div');
+        badge.className = `badge ${earned ? 'unlocked' : 'locked'}`;
+        badge.innerHTML = `<strong>${ach.label}</strong><small>${ach.desc}</small>`;
+        badgeGrid.appendChild(badge);
+      });
+      unlockedCounter.textContent = `${unlocked} / ${achievements.length}`;
+      saveState();
+    };
+
+    const ampmDate = date => new Date(date).toLocaleDateString([], { weekday:'short', month:'short', day:'numeric' });
+    const renderHistory = () => {
+      const today = state.todayKey;
+      const lastSeven = [];
+      for (let i = 0; i < 7; i++) {
+        const day = new Date();
+        day.setDate(day.getDate() - i);
+        const key = day.toISOString().slice(0,10);
+        const saved = JSON.parse(localStorage.getItem(key) || '{}');
+        lastSeven.push({ key, date: ampmDate(key), data: Object.assign({ pushups:0,situps:0,squats:0,running:0 }, saved) });
+      }
+      historyList.innerHTML = '';
+      lastSeven.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'history-card';
+        card.innerHTML = `<div class="day">${item.date}</div><div class="summary"><span>Pushups: ${item.data.pushups}</span><span>Situps: ${item.data.situps}</span><span>Squats: ${item.data.squats}</span><span>Run: ${item.data.running.toFixed(1)} mi</span></div>`;
+        historyList.appendChild(card);
+      });
+    };
+
+    const animateValue = (el) => {
+      el.classList.add('pulse');
+      setTimeout(() => el.classList.remove('pulse'), 500);
+    };
+
+    const updateTrackerDisplay = () => {
+      const totals = computeTotals();
+      todayReps.textContent = totals.todayReps;
+      todayMiles.textContent = totals.todayMiles.toFixed(1);
+      dayStreak.textContent = state.streak;
+      lifetimeXp.textContent = state.lifetimeXp;
+      updateRankDisplay();
+      exercises.forEach(exercise => {
+        const count = state.todayData[exercise.key] || 0;
+        const lifetime = state.stats[exercise.key] || 0;
+        document.getElementById(`value-${exercise.key}`).textContent = exercise.unit === 'miles' ? count.toFixed(1) : count;
+        document.getElementById(`progress-label-${exercise.key}`).textContent = `${exercise.unit === 'miles' ? count.toFixed(1) : count} / ${exercise.goal}`;
+        const ratio = Math.min(1, count / exercise.goal);
+        document.getElementById(`progress-${exercise.key}`).style.width = `${ratio * 100}%`;
+        document.getElementById(`goal-${exercise.key}`).textContent = exercise.goal;
+      });
+      renderLog();
+      renderBadges();
+      renderHistory();
+    };
+
+    const updateHistoryAndStreak = () => {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayKey = yesterday.toISOString().slice(0,10);
+      const yesterdayData = JSON.parse(localStorage.getItem(yesterdayKey) || '{}');
+      const loggedYesterday = (yesterdayData.pushups || 0) + (yesterdayData.situps || 0) + (yesterdayData.squats || 0) + (yesterdayData.running || 0) > 0;
+      if (loggedYesterday) state.streak = Math.max(1, state.streak + 1);
+      else if (state.todayData.pushups + state.todayData.situps + state.todayData.squats + state.todayData.running > 0 && state.streak === 0) state.streak = 1;
+      saveState();
+    };
+
+    const commitChange = (exercise, amount, label) => {
+      const current = Number(state.todayData[exercise.key] || 0);
+      const next = exercise.unit === 'miles' ? Math.max(0, Number((current + amount).toFixed(1))) : Math.max(0, current + amount);
+      state.todayData[exercise.key] = next;
+      state.stats[exercise.key] = Math.max((state.stats[exercise.key] || 0), 0) + (next - current);
+      const xp = xpFor(amount, exercise.xpRate);
+      state.lifetimeXp += xp;
+      saveToday();
+      saveState();
+      recordLog(`${label} ${Math.abs(amount)} ${exercise.unit} ${label.includes('Added') ? 'added' : 'removed'}`);
+      updateStreakIfNeeded();
+      updateTrackerDisplay();
+    };
+
+    const updateStreakIfNeeded = () => {
+      if (computeTotals().todayReps + computeTotals().todayMiles > 0 && state.streak === 0) state.streak = 1;
+      saveState();
+    };
+
+    const bindEvents = () => {
+      trackersContainer.addEventListener('click', event => {
+        const btn = event.target.closest('button');
+        if (!btn) return;
+        const key = btn.dataset.key;
+        const exercise = exercises.find(e => e.key === key);
+        if (!exercise) return;
+        if (btn.dataset.action) {
+          const delta = btn.dataset.action === 'increase' ? (exercise.unit === 'miles' ? 0.5 : 1) : (exercise.unit === 'miles' ? -0.5 : -1);
+          commitChange(exercise, delta, delta > 0 ? 'Added' : 'Removed');
+          animateValue(document.getElementById(`value-${key}`));
+        }
+        if (btn.classList.contains('quick-btn')) {
+          const amount = Number(btn.dataset.amount);
+          commitChange(exercise, amount, 'Added');
+          animateValue(document.getElementById(`value-${key}`));
+        }
+      });
+
+      trackersContainer.addEventListener('click', event => {
+        const edit = event.target.closest('.edit-icon');
+        if (!edit) return;
+        const key = edit.dataset.key;
+        const exercise = exercises.find(e => e.key === key);
+        const newGoal = prompt(`Set daily goal for ${exercise.label}`, exercise.goal);
+        if (newGoal !== null) {
+          const value = Number(newGoal);
+          if (!Number.isNaN(value) && value > 0) {
+            exercise.goal = value;
+            document.getElementById(`goal-${key}`).textContent = exercise.goal;
+            updateTrackerDisplay();
+          }
+        }
+      });
+
+      trackersContainer.addEventListener('input', event => {
+        if (!event.target.classList.contains('value-input')) return;
+        const input = event.target;
+        const key = input.dataset.key;
+        const exercise = exercises.find(e => e.key === key);
+        if (!exercise) return;
+        let value = exercise.unit === 'miles' ? Number(input.value) : parseInt(input.value, 10);
+        if (Number.isNaN(value) || value < 0) value = 0;
+        if (exercise.unit !== 'miles') value = Math.floor(value);
+        state.todayData[key] = value;
+        state.stats[key] = Math.max((state.stats[key] || 0), 0) + value;
+        saveToday();
+        saveState();
+        updateTrackerDisplay();
+      });
+
+      resetTodayBtn.addEventListener('click', () => confirmModal.classList.add('active'));
+      cancelReset.addEventListener('click', () => confirmModal.classList.remove('active'));
+      confirmReset.addEventListener('click', () => {
+        state.todayData = { pushups:0, situps:0, squats:0, running:0, logs: [] };
+        saveToday();
+        confirmModal.classList.remove('active');
+        updateTrackerDisplay();
+      });
+
+      historyToggle.addEventListener('click', () => {
+        historyPanel.classList.toggle('collapsed');
+        historyToggle.querySelector('.toggle-icon').style.transform = historyPanel.classList.contains('collapsed') ? 'rotate(-90deg)' : 'rotate(0deg)';
+      });
+
+      playerNameInput.addEventListener('input', () => {
+        state.playerName = playerNameInput.value.trim() || 'HUNTER';
+        playerNameLabel.textContent = state.playerName;
+        saveState();
+      });
+
+      trackersContainer.addEventListener('mousedown', event => {
+        const btn = event.target.closest('button');
+        if (!btn || !btn.dataset.action) return;
+        let timer;
+        const key = btn.dataset.key;
+        const exercise = exercises.find(e => e.key === key);
+        const step = btn.dataset.action === 'increase' ? 1 : -1;
+        const applyRepeat = () => {
+          commitChange(exercise, exercise.unit === 'miles' ? step * 0.5 : step, step > 0 ? 'Added' : 'Removed');
+          animateValue(document.getElementById(`value-${key}`));
+        };
+        timer = setTimeout(() => {
+          const interval = setInterval(applyRepeat, 120);
+          btn.addEventListener('mouseup', () => clearInterval(interval), { once: true });
+          btn.addEventListener('mouseleave', () => clearInterval(interval), { once: true });
+        }, 400);
+        btn.addEventListener('mouseup', () => clearTimeout(timer), { once: true });
+        btn.addEventListener('mouseleave', () => clearTimeout(timer), { once: true });
+      });
+    };
+
+    const showAchievement = (title, text) => {
+      achievementTitle.textContent = title;
+      achievementText.textContent = text;
+      achievementOverlay.classList.add('active');
+      setTimeout(() => achievementOverlay.classList.remove('active'), 3000);
+    };
+
+    const initialize = () => {
+      loadStorage();
+      renderTrackers();
+      playerNameInput.value = state.playerName;
+      playerNameLabel.textContent = state.playerName;
+      bindEvents();
+      updateRankDisplay();
+      updateTrackerDisplay();
+    };
+
+    initialize();
+  </script>
+</body>
+</html>
